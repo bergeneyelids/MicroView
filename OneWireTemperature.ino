@@ -1,44 +1,39 @@
-#include <space03.h>
-#include <space02.h>
-#include <space01.h>
-#include <fontlargenumber.h>
-#include <font8x16.h>
-#include <font5x7.h>
-#include <7segment.h>
 #include <MicroView.h>
+#include "myMicroView.h"
 
 #include <OneWire.h>
 
-int DS18S20_Pin = 3; //DS18S20 Signal pin on digital 3 (uView 12)
+//DS18S20 Signal pin on digital 3 (uView 12)
+#define DS18S20_Pin 3
 
-char charbuf[10]; // buffer for string conversions
-
-
-MicroViewWidget *vWidget1;
 OneWire ds(DS18S20_Pin);
 
 void setup() {
 	uView.begin();
+	uView.setFontType(FONT_font8x16);
 	uView.clear(PAGE);
-	Serial.begin(9600);
 
-	vWidget1 = new MicroViewSlider(30, 0, 10, 40, WIDGETSTYLE3);
+#ifdef SERIALDEBUG
+	Serial.begin(9600);
+#endif
 }
 
 void loop() {
 	float temperature = getTemp();
-	Serial.println(temperature);
-	//String tString =  String(dtostrf(temperature, 1, 2, charbuf)) + "°C\n";
-	//uView.print(tString);	// display temperature
-	uView.display();
-	vWidget1->setValue(temperature);
-	delay(100); //just here to slow down the output so it is easier to read
 
-	
-	//for (int i = 0; i <= 255; i++) {
-	//	vWidget1->setValue(i);
-	//	uView.display();
-	//}
+	uView.clear(PAGE);
+	uView.setCursor(0, 0);
+	uView.println("T. (C): ");
+	uView.print(temperature);
+	uView.display();
+
+#ifdef SERIALDEBUG
+	Serial.println(temperature);
+#endif
+
+	delay(500); //just here to slow down the output so it is easier to read
+
+
 
 }
 //returns the temperature from one DS18S20 in DEG Celsius
