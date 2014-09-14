@@ -1,5 +1,3 @@
-/*
-*/
 #include <space03.h>
 #include <space02.h>
 #include <space01.h>
