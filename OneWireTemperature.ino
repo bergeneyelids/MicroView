@@ -24,7 +24,7 @@ void setup() {
 	uView.clear(PAGE);
 	Serial.begin(9600);
 
-	vWidget1 = new MicroViewSlider(20, 0, 10, 40, WIDGETSTYLE3);
+	vWidget1 = new MicroViewSlider(30, 0, 10, 40, WIDGETSTYLE3);
 }
 
 void loop() {
