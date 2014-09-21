@@ -1,4 +1,4 @@
-#include <MicroView.h>
+#include "MicroView.h"
 #include "myMicroView.h"
 
 #include <OneWire.h>
@@ -10,7 +10,7 @@ OneWire ds(DS18S20_Pin);
 
 void setup() {
 	uView.begin();
-	uView.setFontType(FONT_font8x16);
+//	uView.setFontType(FONT_font8x16);
 	uView.clear(PAGE);
 
 #ifdef SERIALDEBUG
@@ -21,10 +21,13 @@ void setup() {
 void loop() {
 	float temperature = getTemp();
 
+	uView.setFontType(FONT_font8x16);
 	uView.clear(PAGE);
 	uView.setCursor(0, 0);
 	uView.println("T. (C): ");
 	uView.print(temperature);
+	uView.setFontType(FONT_Arrows);
+	uView.print(DOWN_ARROW);
 	uView.display();
 
 #ifdef SERIALDEBUG
