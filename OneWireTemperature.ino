@@ -21,22 +21,27 @@ void setup() {
 void loop() {
 	float temperature = getTemp();
 
-	uView.setFontType(FONT_font8x16);
 	uView.clear(PAGE);
 	uView.setCursor(0, 0);
+	uView.setFontType(FONT_font8x16);
 	uView.println("T. (C): ");
-	uView.print(temperature);
-	uView.setFontType(FONT_Arrows);
-	uView.print(DOWN_ARROW);
+	uView.println(temperature);
 	uView.display();
 
 #ifdef SERIALDEBUG
 	Serial.println(temperature);
 #endif
 
-	delay(500); //just here to slow down the output so it is easier to read
+	delay(1000); //just here to slow down the output so it is easier to read
 
+	uView.clear(PAGE);
+	uView.setCursor(0, 0);
+	uView.setFontType(FONT_Arrows);
+	uView.print(UP_ARROW);
+	uView.print(DOWN_ARROW);
+	uView.display();
 
+	delay(1000); //just here to slow down the output so it is easier to read
 
 }
 //returns the temperature from one DS18S20 in DEG Celsius

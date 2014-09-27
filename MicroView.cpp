@@ -37,7 +37,7 @@
 // Change the total fonts included
 // PM 20140921
 //#define TOTALFONTS		7
-#define TOTALFONTS		8
+#define TOTALFONTS		3
 #define recvLEN			100
 char serInStr[recvLEN];		// TODO - need to fix a value so that this will not take up too much memory.
 uint8_t serCmd[recvLEN];
