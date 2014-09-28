@@ -1,30 +1,74 @@
+// TO DO:
+// init average
+// normal cycle
+// tmin, tmax
+// derivative -> arrow
+
 #include "MicroView.h"
 #include "myMicroView.h"
 
 #include <OneWire.h>
+#include <math.h>
 
 //DS18S20 Signal pin on digital 3 (uView 12)
 #define DS18S20_Pin 3
 
 OneWire ds(DS18S20_Pin);
 
+// Temp variables
+
+// number of samples to use for running average and smoothing
+#define avgreadings 12
+#define smoothreadings 5
+float tmin = 85.; // min temp
+float tmax = -10.; // max temp
+float tavg = 0.; // avg temp
+//float tsmooth = 0.; // smoothed temp
+float avgsamples[avgreadings];  // samples for average
+float smoothsamples[smoothreadings]; // samples for smoothing
+float totavg = 0.; // running total for average
+float totsmooth = 0.; // running total for smoothing
+int si = 0; // smoothing index
+int ai = 0; // average index
+
+
 void setup() {
-	uView.begin();
-//	uView.setFontType(FONT_font8x16);
-	uView.clear(PAGE);
 
 #ifdef SERIALDEBUG
 	Serial.begin(9600);
 #endif
+
+	uView.begin();
+
+	for (int i = 0; i < avgreadings; i++) {
+		avgsamples[i] = 0.;
+	}
+
+	for (int i = 0; i < smoothreadings; i++) {
+		smoothsamples[i] = 0.;
+}
+
+	// throw away the first readings to initialize all smoothing values
+	for (int i = 0; i < smoothreadings; i++) {
+		float tbad = smoothTemp();
+		displayTemp('*');
+	}
+
+	for (int i = 0; i < avgreadings; i++) {
+		avgsamples[i] = smoothTemp();
+		displayTemp(avgsamples[i]);
+	}
+
+
 }
 
 void loop() {
-	float temperature = getTemp();
+	float temperature = round(getTemp() * 100) / 100;
 
 	uView.clear(PAGE);
 	uView.setCursor(0, 0);
 	uView.setFontType(FONT_font8x16);
-	uView.println("T. (C): ");
+	uView.println("T. (C):");
 	uView.println(temperature);
 	uView.display();
 
@@ -89,4 +133,35 @@ float getTemp() {
 
 	return TemperatureSum;
 
+}
+
+// Compute Temperature Smoothed Value
+float smoothTemp() {
+	totsmooth -= smoothsamples[si];
+	smoothsamples[si] = round(getTemp() * 100) / 100; // 1 decimal precision
+	totsmooth += smoothsamples[si];
+	if (++si >= smoothreadings) {
+		si = 0;
+	}
+	return (totsmooth / smoothreadings);
+}
+
+// Display Temperature
+void displayTemp(float temp) {
+	uView.clear(PAGE);
+	uView.setCursor(0, 0);
+	uView.setFontType(FONT_font8x16);
+	uView.println("T. (C):");
+	uView.println(temp);
+	uView.display();
+	delay(1000);
+}
+void displayTemp(char temp) {
+	uView.clear(PAGE);
+	uView.setCursor(0, 0);
+	uView.setFontType(FONT_font8x16);
+	uView.println("T. (C):");
+	uView.println(temp);
+	uView.display();
+	delay(1000);
 }
