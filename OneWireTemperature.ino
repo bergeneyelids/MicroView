@@ -1,9 +1,3 @@
-// TO DO:
-// init average
-// normal cycle
-// tmin, tmax
-// derivative -> arrow
-
 #include "MicroView.h"
 #include "myMicroView.h"
 
@@ -20,16 +14,19 @@ OneWire ds(DS18S20_Pin);
 // number of samples to use for running average and smoothing
 #define avgreadings 12
 #define smoothreadings 5
+
 float tmin = 85.; // min temp
 float tmax = -10.; // max temp
 float tavg = 0.; // avg temp
-//float tsmooth = 0.; // smoothed temp
+float tavgprev = 0.; // previous avg temp
 float avgsamples[avgreadings];  // samples for average
 float smoothsamples[smoothreadings]; // samples for smoothing
 float totavg = 0.; // running total for average
 float totsmooth = 0.; // running total for smoothing
 int si = 0; // smoothing index
 int ai = 0; // average index
+
+int displayType = 0; // type of temperature to display
 
 
 void setup() {
@@ -51,43 +48,129 @@ void setup() {
 	// throw away the first readings to initialize all smoothing values
 	for (int i = 0; i < smoothreadings; i++) {
 		float tbad = smoothTemp();
+		displayTemp('.');
+	}
+
+	// initialize the average temperature and the sample set
+	for (int i = 0; i < avgreadings; i++) {
+		avgsamples[i] = smoothTemp();
+		totavg += avgsamples[i];
 		displayTemp('*');
 	}
 
-	for (int i = 0; i < avgreadings; i++) {
-		avgsamples[i] = smoothTemp();
-		displayTemp(avgsamples[i]);
+	// set average, min and max temp
+	tavg = totavg / avgreadings;
+	tavgprev = tavg;
+	if (tavg > tmax) {
+		tmax = tavg;
 	}
-
+	if (tavg < tmin) {
+		tmin = tavg;
+	}
 
 }
 
 void loop() {
-	float temperature = round(getTemp() * 100) / 100;
+	totavg -= avgsamples[ai];
+	avgsamples[ai] = smoothTemp();
+	totavg += avgsamples[ai];
+	if (++ai >= avgreadings) {
+		ai = 0;
+	}
+	// set average, min and max temp
+	tavgprev = tavg;
+	tavg = totavg / avgreadings;
+	if (tavg > tmax) {
+		tmax = tavg;
+	}
+	if (tavg < tmin) {
+		tmin = tavg;
+	}
+	switch (displayType){
+	case 0:
+		displayTemp(tavg, displayType);
+		break;
+	case 1:
+		if (tavg > tavgprev) {
+			displayTemp(UP_ARROW);
+		}
+		if (tavg < tavgprev) {
+			displayTemp(DOWN_ARROW);
+		}
+		break;
+	case 2:
+		displayTemp(tmin, displayType);
+		break;
+	case 3:
+		displayTemp(tmax, displayType);
+	}
 
+	if (++displayType > 3) {
+		displayType = 0;
+	}
+
+#ifdef SERIALDEBUG
+	Serial.println(tavg);
+#endif
+
+}
+
+// Compute Temperature Smoothed Value
+float smoothTemp() {
+	totsmooth -= smoothsamples[si];
+	smoothsamples[si] = round(getTemp() * 100) / 100; // 1 decimal precision
+	totsmooth += smoothsamples[si];
+	if (++si >= smoothreadings) {
+		si = 0;
+	}
+	return (totsmooth / smoothreadings);
+}
+
+// Display Temperature
+void displayTemp(float temp, int type) {
+	uView.clear(PAGE);
+	uView.setCursor(0, 0);
+	uView.setFontType(FONT_font8x16);
+
+	switch (type) {
+	// current temp
+	case 0:
+		uView.println("T. (C):");
+		break;
+	// tmin
+	case 2:
+		uView.println("T.MIN.:");
+		break;
+	// tmax
+	case 3:
+		uView.println("T.MAX.:");
+	}
+
+	uView.println(temp);
+	uView.display();
+	delay(1000);
+}
+
+void displayTemp(char temp) {
 	uView.clear(PAGE);
 	uView.setCursor(0, 0);
 	uView.setFontType(FONT_font8x16);
 	uView.println("T. (C):");
-	uView.println(temperature);
+	uView.println(temp);
 	uView.display();
-
-#ifdef SERIALDEBUG
-	Serial.println(temperature);
-#endif
-
-	delay(1000); //just here to slow down the output so it is easier to read
-
-	uView.clear(PAGE);
-	uView.setCursor(0, 0);
-	uView.setFontType(FONT_Arrows);
-	uView.print(UP_ARROW);
-	uView.print(DOWN_ARROW);
-	uView.display();
-
-	delay(1000); //just here to slow down the output so it is easier to read
-
+	delay(1000);
 }
+
+void displayTemp(char *temp) {
+	uView.clear(PAGE);
+	uView.setCursor(27, 10);
+	uView.setFontType(FONT_Arrows);
+	uView.println(*temp);
+	uView.display();
+	delay(1000);
+}
+
+
 //returns the temperature from one DS18S20 in DEG Celsius
 float getTemp() {
 
@@ -135,33 +218,3 @@ float getTemp() {
 
 }
 
-// Compute Temperature Smoothed Value
-float smoothTemp() {
-	totsmooth -= smoothsamples[si];
-	smoothsamples[si] = round(getTemp() * 100) / 100; // 1 decimal precision
-	totsmooth += smoothsamples[si];
-	if (++si >= smoothreadings) {
-		si = 0;
-	}
-	return (totsmooth / smoothreadings);
-}
-
-// Display Temperature
-void displayTemp(float temp) {
-	uView.clear(PAGE);
-	uView.setCursor(0, 0);
-	uView.setFontType(FONT_font8x16);
-	uView.println("T. (C):");
-	uView.println(temp);
-	uView.display();
-	delay(1000);
-}
-void displayTemp(char temp) {
-	uView.clear(PAGE);
-	uView.setCursor(0, 0);
-	uView.setFontType(FONT_font8x16);
-	uView.println("T. (C):");
-	uView.println(temp);
-	uView.display();
-	delay(1000);
-}
